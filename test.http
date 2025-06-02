@@ -1,0 +1,15 @@
+POST http://127.0.0.1:5000/upload-url HTTP/1.1
+content-type: application/json
+
+{
+    "url": "https://sistema.emprad.org.br/10/anais/arquivos/146.pdf"
+}
+
+###
+
+POST http://127.0.0.1:5000/search HTTP/1.1
+content-type: application/json
+
+{
+    "query": "Evasão no ensino superior"
+}

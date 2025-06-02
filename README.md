@@ -31,15 +31,23 @@ GOOGLE_API_KEY=your_google_api_key_here
 python app.py
 ```
 
-2. The API provides two endpoints:
+2. The API provides three endpoints:
 
-   a. Upload and process a PDF:
+   a. Upload and process a PDF file:
 
    ```bash
    curl -X POST -F "file=@your_document.pdf" http://localhost:5000/upload
    ```
 
-   b. Search for similar content:
+   b. Upload and process a PDF from URL:
+
+   ```bash
+   curl -X POST -H "Content-Type: application/json" \
+        -d '{"url":"https://example.com/document.pdf"}' \
+        http://localhost:5000/upload-url
+   ```
+
+   c. Search for similar content:
 
    ```bash
    curl -X POST -H "Content-Type: application/json" \
@@ -54,6 +62,7 @@ python app.py
 - Vector storage using ChromaDB
 - Semantic search capabilities
 - RESTful API endpoints
+- Support for both file uploads and URL-based PDF processing
 
 ## Directory Structure
 

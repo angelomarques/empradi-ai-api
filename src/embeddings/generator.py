@@ -11,7 +11,7 @@ class EmbeddingGenerator:
         if not api_key:
             raise ValueError("GOOGLE_API_KEY environment variable is not set")
 
-        client = genai.Client(api_key="GEMINI_API_KEY")
+        client = genai.Client(api_key=api_key)
         self.model = client
 
     def generate_embeddings(self, texts: List[str]) -> List[List[float]]:
@@ -19,8 +19,12 @@ class EmbeddingGenerator:
         embeddings = []
         for text in texts:
             result = self.model.models.embed_content(
-                model="gemini-embedding-exp-03-07",
+                model="text-embedding-004",
                 contents=text,
             )
-            embeddings.append(result.embedding)
+
+            for embedding in result.embeddings:
+                embeddings.append(embedding.values)
+
+        print("Embeddings generated")
         return embeddings
