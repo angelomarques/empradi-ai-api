@@ -9,6 +9,8 @@ import requests
 from urllib.parse import urlparse
 import tempfile
 from flask_cors import CORS  # Import CORS
+from dotenv import load_dotenv
+from google import genai
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
@@ -97,7 +99,35 @@ def search():
         # Search for similar documents
         results = vector_store.search_similar(query_embedding)
 
-        return jsonify({"results": results}), 200
+        # Prepare context for Gemini
+        context = "\n\n".join([result["text"] for result in results])
+
+        load_dotenv()
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY environment variable is not set")
+
+        # Generate response using Gemini
+        client = genai.Client(api_key=api_key)
+
+        prompt = f"""Based on the following context, please answer the question. 
+        If the context doesn't contain enough information to answer the question, say so.
+        
+        Context:
+        {context}
+        
+        Question: {data['query']}
+        
+        Answer:"""
+
+        response = client.models.generate_content(
+            model="gemini-2.0-flash",
+            contents=prompt,
+        )
+
+        gemini_response = response.text
+
+        return jsonify({"results": results, "answer": gemini_response}), 200
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
