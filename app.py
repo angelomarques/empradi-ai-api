@@ -18,7 +18,7 @@ os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
 os.makedirs("data/chroma", exist_ok=True)
 
 # Initialize components
-pdf_processor = PDFProcessor()
+pdf_processor = PDFProcessor(chunk_size=1000, chunk_overlap=200)
 embedding_generator = EmbeddingGenerator()
 vector_store = VectorStore()
 
@@ -43,8 +43,7 @@ def upload_pdf():
     try:
         # Process PDF
         # TODO: find processor alternative
-        # text_chunks = pdf_processor.process_pdf(filepath)
-        text_chunks = ["Hello, world!"]
+        text_chunks = pdf_processor.process_pdf(filepath)
 
         # Generate embeddings
         embeddings = embedding_generator.generate_embeddings(text_chunks)
@@ -125,11 +124,7 @@ def upload_pdf_from_url():
 
             # Process PDF
             # TODO: find processor alternative
-            # text_chunks = pdf_processor.process_pdf(temp_file.name)
-            text_chunks = [
-                "A evasão no ensino superior é um assunto que impacta tanto a instituição como o acadêmico que se evade. Este artigo objetivou identificar padrões de evasão na educação superior mediante uma revisão sistemática da literatura. Os artigos e revisões foram extraídos das bases Scopus, Web of Science e Periódicos Capes. Aplicado os critérios de inclusão e exclusão, foram selecionados doze artigos mais recentes sobre o tema. Observou-se que as pesquisas foram majoritariamente aplicadas em ambientes universitários de natureza pública, o que indica a escassez de produções científicas sobre instituições de ensino privadas. Foi identificado também pouca pesquisa sobre os cursos stricto sensu.",
-                "Este estudo foi desenvolvido com a finalidade de identificar os principais motivos quelevam os estudantes universitários brasileiros a abandonarem seus cursos, o perfil desses desistentes e as iniciativas empreendidas pelas instituições de ensino superior para diminuir os índices de evasão. A problemática da evasão dos discentes nas instituições de ensino superior, quanto ao âmbito público, retrata a ausência do retorno positivo no que se refere aos investimentos dos recursos provenientes dos cofres públicos (Silva Filho et al., 2007",
-            ]
+            text_chunks = pdf_processor.process_pdf(temp_file.name)
 
             # Generate embeddings
             embeddings = embedding_generator.generate_embeddings(text_chunks)

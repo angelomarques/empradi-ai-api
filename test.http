@@ -11,5 +11,5 @@ POST http://127.0.0.1:5000/search HTTP/1.1
 content-type: application/json
 
 {
-    "query": "Evasão no ensino superior"
+    "query": "Qual o principal motivo para a evasão no ensino superior?"
 }
