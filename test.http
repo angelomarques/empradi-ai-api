@@ -2,7 +2,8 @@ POST http://127.0.0.1:5000/upload-url HTTP/1.1
 content-type: application/json
 
 {
-    "url": "https://sistema.emprad.org.br/10/anais/arquivos/146.pdf"
+    "url": "https://sistema.emprad.org.br/10/anais/arquivos/103.pdf",
+    "title": "EDUCAÇÃO E ALFABETIZAÇÃO FINANCEIRA: IMPACTOS NO BEM-ESTAR E PRODUTIVIDADE ORGANIZACIONAL"
 }
 
 ###
@@ -11,5 +12,5 @@ POST http://127.0.0.1:5000/search HTTP/1.1
 content-type: application/json
 
 {
-    "query": "Qual o principal motivo para a evasão no ensino superior?"
+    "query": "O que é educação financeira?"
 }

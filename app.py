@@ -8,10 +8,25 @@ from werkzeug.utils import secure_filename
 import requests
 from urllib.parse import urlparse
 import tempfile
+from flask_cors import CORS  # Import CORS
 
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max file size
+
+# --- Configure CORS ---
+# Option 1: Basic - Allow all origins for all routes (good for development)
+CORS(app)
+
+# Option 2: More Specific - Allow only your React app's origin
+# This is better for security, especially as you move towards production.
+# CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}})
+# The above line means:
+# - For any route starting with "/api/" (e.g., /api/data, /api/users)
+# - Allow requests specifically from "http://localhost:5173"
+
+# If you want to allow credentials (cookies, authorization headers)
+# CORS(app, resources={r"/api/*": {"origins": "http://localhost:5173"}}, supports_credentials=True)
 
 # Create necessary directories
 os.makedirs(app.config["UPLOAD_FOLDER"], exist_ok=True)
@@ -96,6 +111,9 @@ def upload_pdf_from_url():
         return jsonify({"error": "No URL provided"}), 400
 
     url = data["url"]
+    title = data.get(
+        "title", "Untitled"
+    )  # Get title from request body, default to "Untitled"
 
     # Validate URL
     try:
@@ -131,7 +149,9 @@ def upload_pdf_from_url():
 
             # Store in vector database
             filename = os.path.basename(parsed_url.path) or "downloaded.pdf"
-            metadata = [{"source": filename, "url": url} for _ in text_chunks]
+            metadata = [
+                {"source": filename, "url": url, "title": title} for _ in text_chunks
+            ]
             vector_store.store_embeddings(text_chunks, embeddings, metadata)
 
             return (
