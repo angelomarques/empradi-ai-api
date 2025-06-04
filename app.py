@@ -40,52 +40,6 @@ embedding_generator = EmbeddingGenerator()
 vector_store = VectorStore()
 
 
-@app.route("/upload", methods=["POST"])
-def upload_pdf():
-    print("Uploading PDF")
-    if "file" not in request.files:
-        return jsonify({"error": "No file provided"}), 400
-
-    file = request.files["file"]
-    if file.filename == "":
-        return jsonify({"error": "No file selected"}), 400
-
-    if not file.filename.endswith(".pdf"):
-        return jsonify({"error": "File must be a PDF"}), 400
-
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(app.config["UPLOAD_FOLDER"], filename)
-    file.save(filepath)
-
-    try:
-        # Process PDF
-        # TODO: find processor alternative
-        text_chunks = pdf_processor.process_pdf(filepath)
-
-        # Generate embeddings
-        embeddings = embedding_generator.generate_embeddings(text_chunks)
-
-        # Store in vector database
-        metadata = [{"source": filename} for _ in text_chunks]
-        vector_store.store_embeddings(text_chunks, embeddings, metadata)
-
-        return (
-            jsonify(
-                {"message": "PDF processed successfully", "chunks": len(text_chunks)}
-            ),
-            200,
-        )
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-    finally:
-        # Clean up uploaded file
-        print("Cleaning up uploaded file")
-        if os.path.exists(filepath):
-            os.remove(filepath)
-
-
 @app.route("/search", methods=["POST"])
 def search():
     data = request.get_json()
@@ -171,7 +125,6 @@ def upload_pdf_from_url():
             temp_file.flush()
 
             # Process PDF
-            # TODO: find processor alternative
             text_chunks = pdf_processor.process_pdf(temp_file.name)
 
             # Generate embeddings
