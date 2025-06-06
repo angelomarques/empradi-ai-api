@@ -153,22 +153,28 @@ def upload_pdf_from_url():
 
             # Process PDF
             text_chunks = pdf_processor.process_pdf(temp_file.name)
+            if not text_chunks:
+                return jsonify({"error": "No text content extracted from PDF"}), 400
 
-            # Generate embeddings
             embeddings = embedding_generator.generate_embeddings(text_chunks)
 
-            # Store in vector database
-            filename = os.path.basename(parsed_url.path) or "downloaded.pdf"
-            metadata = [
-                {"source": filename, "url": url, "title": title} for _ in text_chunks
-            ]
-            vector_store.store_embeddings(text_chunks, embeddings, metadata)
+            # Create and save article in MongoDB
+            # Create an article for  each embedding
+            for index, embedding in enumerate(embeddings):
+                article = Article(
+                    title=title,
+                    url=url,
+                    embeddings=embedding,
+                    content=text_chunks[index],
+                )
+                article_model.create(article)
 
             return (
                 jsonify(
                     {
-                        "message": "PDF processed successfully",
-                        "chunks": len(text_chunks),
+                        "message": "PDF processed and saved successfully",
+                        "title": title,
+                        "url": url,
                     }
                 ),
                 200,
