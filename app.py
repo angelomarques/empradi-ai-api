@@ -79,10 +79,10 @@ def search():
         query_embedding = embedding_generator.generate_embeddings([data["query"]])[0]
 
         # Search for similar documents
-        results = vector_store.search_similar(query_embedding)
+        results = article_model.search_by_embedding(query_embedding)
 
         # Prepare context for Gemini
-        context = "\n\n".join([result["text"] for result in results])
+        context = "\n\n".join([result.content for result in results])
 
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
@@ -108,7 +108,15 @@ def search():
 
         gemini_response = response.text
 
-        return jsonify({"results": results, "answer": gemini_response}), 200
+        return (
+            jsonify(
+                {
+                    "results": [result.to_dict() for result in results],
+                    "answer": gemini_response,
+                }
+            ),
+            200,
+        )
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500

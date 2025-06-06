@@ -28,7 +28,7 @@ class Article:
         article = Article(
             title=data["title"],
             url=data["url"],
-            embeddings=data["embeddings"],
+            embeddings=data.get("embeddings", []),
             content=data["content"],
         )
         article.created_at = data.get("created_at", datetime.today())
@@ -90,37 +90,26 @@ class ArticleModel:
         """Search articles by embedding similarity."""
         if self.collection is None:
             raise ValueError("Articles collection is not properly initialized")
-        # Note: This is a simple implementation. For production, you might want to use
-        # MongoDB's vector search capabilities or a dedicated vector database
+
         pipeline = [
             {
-                "$addFields": {
-                    "similarity": {
-                        "$reduce": {
-                            "input": {"$range": [0, {"$size": "$embeddings"}]},
-                            "initialValue": 0,
-                            "in": {
-                                "$add": [
-                                    "$$value",
-                                    {
-                                        "$multiply": [
-                                            {"$arrayElemAt": ["$embeddings", "$$this"]},
-                                            {
-                                                "$arrayElemAt": [
-                                                    query_embedding,
-                                                    "$$this",
-                                                ]
-                                            },
-                                        ]
-                                    },
-                                ]
-                            },
-                        }
-                    }
+                "$vectorSearch": {
+                    "index": "vector_index",
+                    "path": "embeddings",
+                    "queryVector": query_embedding,
+                    "numCandidates": 150,
+                    "limit": 10,
                 }
             },
-            {"$sort": {"similarity": -1}},
-            {"$limit": limit},
+            {
+                "$project": {
+                    "_id": 0,
+                    "title": 1,
+                    "url": 1,
+                    "content": 1,
+                    "score": {"$meta": "vectorSearchScore"},
+                }
+            },
         ]
 
         results = self.collection.aggregate(pipeline)
