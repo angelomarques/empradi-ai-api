@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 from src.pdf_processor.processor import PDFProcessor
 from src.embeddings.generator import EmbeddingGenerator
 from src.vector_store.store import VectorStore
+from src.models.article import Article, ArticleModel
 import os
 from werkzeug.utils import secure_filename
 import requests
@@ -51,11 +52,20 @@ load_dotenv()
 # Replace with your actual MongoDB connection URI.
 # Example for local MongoDB:
 app.config["MONGO_URI"] = os.getenv("MONGODB_URI")
+if not app.config["MONGO_URI"]:
+    raise ValueError("MONGODB_URI environment variable is not set")
+
+
 # Example for MongoDB Atlas (replace with your actual URI):
-# app.config["MONGO_URI"] = "mongodb+srv://<username>:<password>@yourcluster.mongodb.net/mytodolist?retryWrites=true&w=majority"
+# app.config["MONGO_URI"] = "mongodb+srv://<username>:<password>@yourcluster.mongodb.net/mytodolist?
+# retryWrites=true&w=majority"
+
 
 # Initialize PyMongo
 mongo = PyMongo(app)
+
+# Initialize article model after MongoDB connection is established
+article_model = ArticleModel(mongo)
 
 
 @app.route("/search", methods=["POST"])
@@ -173,6 +183,102 @@ def upload_pdf_from_url():
             # Clean up the temporary file
             if os.path.exists(temp_file.name):
                 os.unlink(temp_file.name)
+
+
+@app.route("/articles", methods=["POST"])
+def create_article():
+    """Create a new article."""
+    data = request.get_json()
+    if not data or not all(
+        k in data for k in ["title", "url", "embeddings", "content"]
+    ):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        article = Article(
+            title=data["title"],
+            url=data["url"],
+            embeddings=data["embeddings"],
+            content=data["content"],
+        )
+        article_id = article_model.create(article)
+        return (
+            jsonify({"message": "Article created successfully", "id": article_id}),
+            201,
+        )
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/articles", methods=["GET"])
+def get_articles():
+    """Get all articles."""
+    try:
+        articles = article_model.get_all()
+        return jsonify([article.to_dict() for article in articles]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/articles/<article_id>", methods=["GET"])
+def get_article(article_id):
+    """Get a specific article by ID."""
+    try:
+        article = article_model.get_by_id(article_id)
+        if article:
+            return jsonify(article.to_dict()), 200
+        return jsonify({"error": "Article not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/articles/<article_id>", methods=["PUT"])
+def update_article(article_id):
+    """Update an article."""
+    data = request.get_json()
+    if not data or not all(
+        k in data for k in ["title", "url", "embeddings", "content"]
+    ):
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        article = Article(
+            title=data["title"],
+            url=data["url"],
+            embeddings=data["embeddings"],
+            content=data["content"],
+        )
+        if article_model.update(article_id, article):
+            return jsonify({"message": "Article updated successfully"}), 200
+        return jsonify({"error": "Article not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/articles/<article_id>", methods=["DELETE"])
+def delete_article(article_id):
+    """Delete an article."""
+    try:
+        if article_model.delete(article_id):
+            return jsonify({"message": "Article deleted successfully"}), 200
+        return jsonify({"error": "Article not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/articles/search", methods=["POST"])
+def search_articles():
+    """Search articles by embedding similarity."""
+    data = request.get_json()
+    if not data or "embedding" not in data:
+        return jsonify({"error": "No embedding provided"}), 400
+
+    try:
+        limit = data.get("limit", 5)
+        articles = article_model.search_by_embedding(data["embedding"], limit)
+        return jsonify([article.to_dict() for article in articles]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":

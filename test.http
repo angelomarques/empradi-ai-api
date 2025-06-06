@@ -14,3 +14,15 @@ content-type: application/json
 {
     "query": "O que é educação financeira?"
 }
+
+###
+
+POST http://127.0.0.1:5000/articles HTTP/1.1
+content-type: application/json
+
+{
+    "title": "TRANSFORMAÇÃO DIGITAL: APROVEITAMENTO DE OPORTUNIDADE COM AS MUDANÇAS INTRODUZIDAS PELO MEC PARA EMISSÃO DOCUMENTOS ACADÊMICOS",
+    "url": "https://sistema.emprad.org.br/10/anais/arquivos/51.pdf",
+    "content": "O que é educação financeira?",
+    "embeddings": [0.1, 0.2, 0.3, 0.4, 0.5]
+}
