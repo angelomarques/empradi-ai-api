@@ -2,8 +2,8 @@ POST http://127.0.0.1:5000/upload-url HTTP/1.1
 content-type: application/json
 
 {
-    "url": "https://sistema.emprad.org.br/10/anais/arquivos/51.pdf",
-    "title": "TRANSFORMAÇÃO DIGITAL: APROVEITAMENTO DE OPORTUNIDADE COM AS MUDANÇAS INTRODUZIDAS PELO MEC PARA EMISSÃO DOCUMENTOS ACADÊMICOS"
+    "url": "https://sistema.emprad.org.br/10/anais/arquivos/146.pdf",
+    "title": "EVASÃO NAS UNIVERSIDADES PÚBLICAS: UMA REVISÃO SISTEMÁTICA DA LITERATURA."
 }
 
 ###

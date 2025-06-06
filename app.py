@@ -91,15 +91,15 @@ def search():
         # Generate response using Gemini
         client = genai.Client(api_key=api_key)
 
-        prompt = f"""Based on the following context, please answer the question. 
-        If the context doesn't contain enough information to answer the question, say so.
+        prompt = f"""Com base no seguinte contexto, por favor responda à pergunta.
+        Se o contexto não contiver informações suficientes para responder à pergunta, indique isso.
         
-        Context:
+        Contexto:
         {context}
         
-        Question: {data['query']}
+        Pergunta: {data['query']}
         
-        Answer:"""
+        Resposta:"""
 
         response = client.models.generate_content(
             model="gemini-2.0-flash",
