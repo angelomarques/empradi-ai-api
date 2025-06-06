@@ -12,6 +12,10 @@ from flask_cors import CORS  # Import CORS
 from dotenv import load_dotenv
 from google import genai
 
+from flask_pymongo import PyMongo
+
+# from bson.objectid import ObjectId # To convert string IDs to ObjectId for querying
+
 app = Flask(__name__)
 app.config["UPLOAD_FOLDER"] = "uploads"
 app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16MB max file size
@@ -38,6 +42,18 @@ os.makedirs("data/chroma", exist_ok=True)
 pdf_processor = PDFProcessor(chunk_size=1000, chunk_overlap=200)
 embedding_generator = EmbeddingGenerator()
 vector_store = VectorStore()
+
+# --- Configuration ---
+# Best practice: Use environment variables for sensitive data like connection strings
+# For simplicity, we'll hardcode it here.
+# Replace with your actual MongoDB connection URI.
+# Example for local MongoDB:
+app.config["MONGO_URI"] = "mongodb://localhost:27017/mytodolist"
+# Example for MongoDB Atlas (replace with your actual URI):
+# app.config["MONGO_URI"] = "mongodb+srv://<username>:<password>@yourcluster.mongodb.net/mytodolist?retryWrites=true&w=majority"
+
+# Initialize PyMongo
+mongo = PyMongo(app)
 
 
 @app.route("/search", methods=["POST"])

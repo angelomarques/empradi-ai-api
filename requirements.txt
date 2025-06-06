@@ -14,12 +14,14 @@ click==8.2.1
 coloredlogs==15.0.1
 Deprecated==1.2.18
 distro==1.9.0
+dnspython==2.7.0
 durationpy==0.10
 fastapi==0.115.12
 filelock==3.18.0
 filetype==1.2.0
 Flask==3.1.1
 flask-cors==6.0.0
+Flask-PyMongo==3.0.1
 flatbuffers==25.2.10
 fsspec==2025.5.1
 google-ai-generativelanguage==0.6.18
@@ -80,6 +82,7 @@ pyasn1_modules==0.4.2
 pydantic==2.11.5
 pydantic_core==2.33.2
 Pygments==2.19.1
+pymongo==4.13.0
 PyPDF2==3.0.1
 PyPika==0.48.9
 pyproject_hooks==1.2.0

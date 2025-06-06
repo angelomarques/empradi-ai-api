@@ -79,3 +79,9 @@ python app.py
 └── data/
     └── chroma/          # Vector database storage
 ```
+
+## When installed a new module
+
+```bash
+pip freeze > requirements.txt
+```
