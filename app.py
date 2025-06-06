@@ -43,12 +43,14 @@ pdf_processor = PDFProcessor(chunk_size=1000, chunk_overlap=200)
 embedding_generator = EmbeddingGenerator()
 vector_store = VectorStore()
 
+load_dotenv()
+
 # --- Configuration ---
 # Best practice: Use environment variables for sensitive data like connection strings
 # For simplicity, we'll hardcode it here.
 # Replace with your actual MongoDB connection URI.
 # Example for local MongoDB:
-app.config["MONGO_URI"] = "mongodb://localhost:27017/mytodolist"
+app.config["MONGO_URI"] = os.getenv("MONGODB_URI")
 # Example for MongoDB Atlas (replace with your actual URI):
 # app.config["MONGO_URI"] = "mongodb+srv://<username>:<password>@yourcluster.mongodb.net/mytodolist?retryWrites=true&w=majority"
 
@@ -72,7 +74,6 @@ def search():
         # Prepare context for Gemini
         context = "\n\n".join([result["text"] for result in results])
 
-        load_dotenv()
         api_key = os.getenv("GOOGLE_API_KEY")
         if not api_key:
             raise ValueError("GOOGLE_API_KEY environment variable is not set")

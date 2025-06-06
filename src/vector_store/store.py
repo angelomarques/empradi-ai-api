@@ -1,7 +1,6 @@
 import chromadb
 from chromadb.config import Settings
 from typing import List, Dict
-import os
 
 
 class VectorStore:
