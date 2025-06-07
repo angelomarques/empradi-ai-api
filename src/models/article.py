@@ -29,7 +29,7 @@ class Article:
             title=data["title"],
             url=data["url"],
             embeddings=data.get("embeddings", []),
-            content=data["content"],
+            content=data.get("content", ""),
         )
         article.created_at = data.get("created_at", datetime.today())
         article.updated_at = data.get("updated_at", datetime.today())
@@ -63,7 +63,22 @@ class ArticleModel:
         """Get all articles."""
         if self.collection is None:
             raise ValueError("Articles collection is not properly initialized")
-        results = self.collection.find()
+        results = self.collection.aggregate(
+            [
+                {
+                    "$sort": {"_id": -1}
+                },  # Sort by _id in descending order to get the most recent article for each URL
+                {
+                    "$group": {
+                        "_id": "$url",
+                        "title": {"$first": "$title"},
+                        "url": {"$first": "$url"},
+                        "created_at": {"$first": "$created_at"},
+                        "updated_at": {"$first": "$updated_at"},
+                    }
+                },
+            ]
+        )
         return [Article.from_dict(result) for result in results]
 
     def update(self, article_id: str, article: Article) -> bool:
