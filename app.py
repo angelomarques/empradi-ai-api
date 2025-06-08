@@ -295,6 +295,73 @@ def search_articles():
         return jsonify({"error": str(e)}), 500
 
 
+@app.route("/upload-json", methods=["POST"])
+def upload_json_from_url():
+    """Upload and process articles from a JSON file URL."""
+    data = request.get_json()
+    if not data or "url" not in data:
+        return jsonify({"error": "No URL provided"}), 400
+
+    url = data["url"]
+
+    # Validate URL
+    try:
+        parsed_url = urlparse(url)
+        if not parsed_url.scheme or not parsed_url.netloc:
+            return jsonify({"error": "Invalid URL provided"}), 400
+    except Exception:
+        return jsonify({"error": "Invalid URL provided"}), 400
+
+    try:
+        # Download the JSON file
+        response = requests.get(url)
+        response.raise_for_status()
+
+        # Parse JSON data
+        articles_data = response.json()
+
+        # Process each article
+        processed_articles = []
+        for article_data in articles_data:
+            # TODO: Generate embeddings for the article content
+            # Generate embeddings for the article title
+            title_embedding = embedding_generator.generate_embeddings(
+                [article_data["nomeTrabalho"]]
+            )[0]
+
+            # Create article object
+            article = Article(
+                title=article_data["nomeTrabalho"],
+                url=article_data["url"],
+                embeddings=title_embedding,
+                content=article_data[
+                    "nomeTrabalho"
+                ],  # Using title as content since that's what we have
+            )
+
+            # Save to MongoDB
+            article_id = article_model.create(article)
+            processed_articles.append(
+                {"id": article_id, "title": article.title, "url": article.url}
+            )
+
+        return (
+            jsonify(
+                {
+                    "message": f"Successfully processed {len(processed_articles)} articles",
+                }
+            ),
+            200,
+        )
+
+    except requests.RequestException as e:
+        return jsonify({"error": f"Failed to download JSON file: {str(e)}"}), 400
+    except ValueError as e:
+        return jsonify({"error": f"Invalid JSON data: {str(e)}"}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     # This is for local development only.
     # Gunicorn will run the app in production.
