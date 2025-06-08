@@ -325,25 +325,90 @@ def upload_json_from_url():
         for article_data in articles_data:
             # TODO: Generate embeddings for the article content
             # Generate embeddings for the article title
-            title_embedding = embedding_generator.generate_embeddings(
-                [article_data["nomeTrabalho"]]
-            )[0]
+            # title_embedding = embedding_generator.generate_embeddings(
+            #     [article_data["nomeTrabalho"]]
+            # )[0]
 
-            # Create article object
-            article = Article(
-                title=article_data["nomeTrabalho"],
-                url=article_data["url"],
-                embeddings=title_embedding,
-                content=article_data[
-                    "nomeTrabalho"
-                ],  # Using title as content since that's what we have
-            )
+            # # Create article object
+            # article = Article(
+            #     title=article_data["nomeTrabalho"],
+            #     url=article_data["url"],
+            #     embeddings=title_embedding,
+            #     content=article_data[
+            #         "nomeTrabalho"
+            #     ],  # Using title as content since that's what we have
+            # )
 
-            # Save to MongoDB
-            article_id = article_model.create(article)
-            processed_articles.append(
-                {"id": article_id, "title": article.title, "url": article.url}
-            )
+            # # Save to MongoDB
+            # article_id = article_model.create(article)
+            # processed_articles.append(
+            #     {"id": article_id, "title": article.title, "url": article.url}
+            # )
+            # Validate URL
+            try:
+                parsed_url = urlparse(article_data["url"])
+                if not parsed_url.scheme or not parsed_url.netloc:
+                    return jsonify({"error": "Invalid URL provided"}), 400
+            except Exception:
+                return jsonify({"error": "Invalid URL provided"}), 400
+
+            # Create a temporary file to store the PDF
+            with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
+                try:
+                    print(f"Processing article: {article_data['nomeTrabalho']}")
+                    # Download the PDF
+                    response = requests.get(article_data["url"], stream=True)
+                    response.raise_for_status()  # Raise an exception for bad status codes
+
+                    # Check if the content type is PDF
+                    content_type = response.headers.get("content-type", "").lower()
+                    if "application/pdf" not in content_type:
+                        return jsonify({"error": "URL does not point to a PDF file"}), 400
+
+                    # Save the PDF to the temporary file
+                    for chunk in response.iter_content(chunk_size=8192):
+                        temp_file.write(chunk)
+                    temp_file.flush()
+
+                    print(f"Processing PDF: {article_data['nomeTrabalho']}")
+                    # Process PDF
+                    text_chunks = pdf_processor.process_pdf(temp_file.name)
+                    if not text_chunks:
+                        return jsonify({"error": "No text content extracted from PDF"}), 400
+
+                    print(f"Generating embeddings for: {article_data['nomeTrabalho']}")
+                    embeddings = embedding_generator.generate_embeddings(text_chunks)
+
+                    # Create and save article in MongoDB
+                    # Create an article for  each embedding
+                    for index, embedding in enumerate(embeddings):
+                        article = Article(
+                            title=article_data["nomeTrabalho"],
+                            url=article_data["url"],
+                            embeddings=embedding,
+                            content=text_chunks[index],
+                        )
+                        print(f"Saving article: {article_data['nomeTrabalho']}")
+                        article_model.create(article)
+
+                    processed_articles.append(
+                        {
+                            "title": article_data["nomeTrabalho"],
+                            "url": article_data["url"],
+                        }
+                    )
+
+                except requests.RequestException as e:
+                    print(f"Error processing article: {article_data['nomeTrabalho']}")
+                    print(f"Error: {str(e)}")
+                except Exception as e:
+                    print(f"Error processing article: {article_data['nomeTrabalho']}")
+                    print(f"Error: {str(e)}")
+                finally:
+                    print("Cleaning up temporary file")
+                    # Clean up the temporary file
+                    if os.path.exists(temp_file.name):
+                        os.unlink(temp_file.name)
 
         return (
             jsonify(
