@@ -5,11 +5,19 @@ from flask_pymongo import PyMongo
 
 
 class Article:
-    def __init__(self, title: str, url: str, embeddings: List[float], content: str):
+    def __init__(
+        self,
+        title: str,
+        url: str,
+        embeddings: List[float],
+        content: str,
+        score: float = None,
+    ):
         self.title = title
         self.url = url
         self.embeddings = embeddings
         self.content = content
+        self.score = score
         self.created_at = datetime.today()
         self.updated_at = datetime.today()
 
@@ -19,6 +27,7 @@ class Article:
             "url": self.url,
             "embeddings": self.embeddings,
             "content": self.content,
+            "score": self.score,
             "created_at": self.created_at,
             "updated_at": self.updated_at,
         }
@@ -30,6 +39,7 @@ class Article:
             url=data["url"],
             embeddings=data.get("embeddings", []),
             content=data.get("content", ""),
+            score=data.get("score"),
         )
         article.created_at = data.get("created_at", datetime.today())
         article.updated_at = data.get("updated_at", datetime.today())
