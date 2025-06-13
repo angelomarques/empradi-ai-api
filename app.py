@@ -91,7 +91,7 @@ def search():
         # Generate response using Gemini
         client = genai.Client(api_key=api_key)
 
-        prompt = f"""Com base no seguinte contexto, por favor responda à pergunta.
+        prompt = f"""Com base no seguinte contexto, por favor responda à pergunta com o máximo de detalhes possível que você conseguir extrair do contexto.
         Se o contexto não contiver informações suficientes para responder à pergunta, indique isso.
         
         Contexto:
