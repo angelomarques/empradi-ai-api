@@ -12,6 +12,7 @@ import tempfile
 from flask_cors import CORS  # Import CORS
 from dotenv import load_dotenv
 from google import genai
+import time
 
 from flask_pymongo import PyMongo
 
@@ -322,7 +323,7 @@ def upload_json_from_url():
 
         # Process each article
         processed_articles = []
-        for article_data in articles_data:
+        for index, article_data in enumerate(articles_data):
             # TODO: Generate embeddings for the article content
             # Generate embeddings for the article title
             # title_embedding = embedding_generator.generate_embeddings(
@@ -355,6 +356,10 @@ def upload_json_from_url():
             # Create a temporary file to store the PDF
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
                 try:
+                    print("taking break for 10 seconds...")
+                    time.sleep(10)  # Pauses execution for 10 seconds
+                    print("resuming...")
+                    print(f"Processing article of index: {index}")
                     print(f"Processing article: {article_data['nomeTrabalho']}")
                     # Download the PDF
                     response = requests.get(article_data["url"], stream=True)
@@ -363,7 +368,10 @@ def upload_json_from_url():
                     # Check if the content type is PDF
                     content_type = response.headers.get("content-type", "").lower()
                     if "application/pdf" not in content_type:
-                        return jsonify({"error": "URL does not point to a PDF file"}), 400
+                        return (
+                            jsonify({"error": "URL does not point to a PDF file"}),
+                            400,
+                        )
 
                     # Save the PDF to the temporary file
                     for chunk in response.iter_content(chunk_size=8192):
@@ -374,7 +382,7 @@ def upload_json_from_url():
                     # Process PDF
                     text_chunks = pdf_processor.process_pdf(temp_file.name)
                     if not text_chunks:
-                        return jsonify({"error": "No text content extracted from PDF"}), 400
+                        print("No text content extracted from PDF")
 
                     print(f"Generating embeddings for: {article_data['nomeTrabalho']}")
                     embeddings = embedding_generator.generate_embeddings(text_chunks)
