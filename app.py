@@ -13,6 +13,7 @@ from flask_cors import CORS  # Import CORS
 from dotenv import load_dotenv
 from google import genai
 import time
+import asyncio
 
 from flask_pymongo import PyMongo
 
@@ -77,7 +78,9 @@ def search():
 
     try:
         # Generate embedding for the query
-        query_embedding = embedding_generator.generate_embeddings([data["query"]])[0]
+        query_embedding = asyncio.run(
+            embedding_generator.generate_embeddings_async([data["query"]])
+        )[0]
 
         # Search for similar documents
         results = article_model.search_by_embedding(query_embedding)
@@ -165,7 +168,9 @@ def upload_pdf_from_url():
             if not text_chunks:
                 return jsonify({"error": "No text content extracted from PDF"}), 400
 
-            embeddings = embedding_generator.generate_embeddings(text_chunks)
+            embeddings = asyncio.run(
+                embedding_generator.generate_embeddings_async(text_chunks)
+            )
 
             # Create and save article in MongoDB
             # Create an article for  each embedding
@@ -385,7 +390,9 @@ def upload_json_from_url():
                         print("No text content extracted from PDF")
 
                     print(f"Generating embeddings for: {article_data['nomeTrabalho']}")
-                    embeddings = embedding_generator.generate_embeddings(text_chunks)
+                    embeddings = asyncio.run(
+                        embedding_generator.generate_embeddings_async(text_chunks)
+                    )
 
                     # Create and save article in MongoDB
                     # Create an article for  each embedding

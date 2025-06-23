@@ -51,7 +51,7 @@ class ArticleModel:
         if mongo is None:
             raise ValueError("MongoDB connection is not properly initialized")
         self.mongo = mongo
-        self.collection = mongo.db.emprad_articles
+        self.collection = mongo.db.emprad_articles_prod
 
     def create(self, article: Article) -> str:
         """Create a new article in the database."""

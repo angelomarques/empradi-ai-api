@@ -38,5 +38,5 @@ POST http://127.0.0.1:5000/upload-json HTTP/1.1
 content-type: application/json
 
 {
-    "url": "http://tmpfiles.org/dl/1307419/json_test.json"
+    "url": "http://tmpfiles.org/dl/2861355/arq8-and-9.json"
 }
