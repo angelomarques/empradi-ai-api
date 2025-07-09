@@ -12,7 +12,7 @@ client = MongoClient(uri)
 
 # Access your database and collection
 database = client["test"]
-collection = database["emprad_articles"]
+collection = database["emprad_articles_prod"]
 
 # Create your index model, then create the search index
 search_index_model = SearchIndexModel(
@@ -21,7 +21,7 @@ search_index_model = SearchIndexModel(
             {
                 "type": "vector",
                 "path": "embeddings",
-                "numDimensions": 768,
+                "numDimensions": 1536,
                 "similarity": "dotProduct",
                 "quantization": "scalar",
             }

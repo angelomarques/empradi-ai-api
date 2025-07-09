@@ -410,6 +410,7 @@ def upload_json_from_url():
 
         # Process each article
         processed_articles = []
+        failed_articles = []
         for index, article_data in enumerate(articles_data):
             # TODO: Generate embeddings for the article content
             # Generate embeddings for the article title
@@ -436,16 +437,30 @@ def upload_json_from_url():
             try:
                 parsed_url = urlparse(article_data["url"])
                 if not parsed_url.scheme or not parsed_url.netloc:
-                    return jsonify({"error": "Invalid URL provided"}), 400
+                    failed_articles.append(
+                        {
+                            "title": article_data["nomeTrabalho"],
+                            "url": article_data["url"],
+                            "error": "Invalid URL provided",
+                        }
+                    )
+                    continue
             except Exception:
-                return jsonify({"error": "Invalid URL provided"}), 400
+                failed_articles.append(
+                    {
+                        "title": article_data["nomeTrabalho"],
+                        "url": article_data["url"],
+                        "error": "Invalid URL provided",
+                    }
+                )
+                continue
 
             # Create a temporary file to store the PDF
             with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as temp_file:
                 try:
-                    print("taking break for 10 seconds...")
-                    time.sleep(10)  # Pauses execution for 10 seconds
-                    print("resuming...")
+                    # print("taking break for 10 seconds...")
+                    # time.sleep(10)  # Pauses execution for 10 seconds
+                    # print("resuming...")
                     print(f"Processing article of index: {index}")
                     print(f"Processing article: {article_data['nomeTrabalho']}")
                     # Download the PDF
@@ -455,10 +470,14 @@ def upload_json_from_url():
                     # Check if the content type is PDF
                     content_type = response.headers.get("content-type", "").lower()
                     if "application/pdf" not in content_type:
-                        return (
-                            jsonify({"error": "URL does not point to a PDF file"}),
-                            400,
+                        failed_articles.append(
+                            {
+                                "title": article_data["nomeTrabalho"],
+                                "url": article_data["url"],
+                                "error": "URL does not point to a PDF file",
+                            }
                         )
+                        continue
 
                     # Save the PDF to the temporary file
                     for chunk in response.iter_content(chunk_size=8192):
@@ -469,12 +488,21 @@ def upload_json_from_url():
                     # Process PDF
                     text_chunks = pdf_processor.process_pdf(temp_file.name)
                     if not text_chunks:
-                        print("No text content extracted from PDF")
+                        failed_articles.append(
+                            {
+                                "title": article_data["nomeTrabalho"],
+                                "url": article_data["url"],
+                                "error": "No text content extracted from PDF",
+                            }
+                        )
+                        continue
 
                     print(f"Generating embeddings for: {article_data['nomeTrabalho']}")
                     embeddings = asyncio.run(
                         embedding_generator.generate_embeddings_async(text_chunks)
                     )
+
+                    print("Embeddings generated")
 
                     # Create and save article in MongoDB
                     # Create an article for  each embedding
@@ -485,8 +513,9 @@ def upload_json_from_url():
                             embeddings=embedding,
                             content=text_chunks[index],
                         )
-                        print(f"Saving article: {article_data['nomeTrabalho']}")
                         article_model.create(article)
+
+                    print(f"Embeddings saved for: {article_data['nomeTrabalho']}")
 
                     processed_articles.append(
                         {
@@ -496,11 +525,27 @@ def upload_json_from_url():
                     )
 
                 except requests.RequestException as e:
+                    error_msg = f"Failed to download PDF: {str(e)}"
                     print(f"Error processing article: {article_data['nomeTrabalho']}")
-                    print(f"Error: {str(e)}")
+                    print(f"Error: {error_msg}")
+                    failed_articles.append(
+                        {
+                            "title": article_data["nomeTrabalho"],
+                            "url": article_data["url"],
+                            "error": error_msg,
+                        }
+                    )
                 except Exception as e:
+                    error_msg = f"Unexpected error: {str(e)}"
                     print(f"Error processing article: {article_data['nomeTrabalho']}")
-                    print(f"Error: {str(e)}")
+                    print(f"Error: {error_msg}")
+                    failed_articles.append(
+                        {
+                            "title": article_data["nomeTrabalho"],
+                            "url": article_data["url"],
+                            "error": error_msg,
+                        }
+                    )
                 finally:
                     print("Cleaning up temporary file")
                     # Clean up the temporary file
@@ -511,6 +556,7 @@ def upload_json_from_url():
             jsonify(
                 {
                     "message": f"Successfully processed {len(processed_articles)} articles",
+                    "failed_articles": failed_articles,
                 }
             ),
             200,
