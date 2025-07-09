@@ -43,6 +43,9 @@ class Prompt:
         )
         prompt.created_at = data.get("created_at", datetime.today())
         prompt.updated_at = data.get("updated_at", datetime.today())
+        # Add the MongoDB _id if it exists
+        if "_id" in data:
+            prompt.id = str(data["_id"])
         return prompt
 
 

@@ -494,6 +494,116 @@ def upload_json_from_url():
         return jsonify({"error": str(e)}), 500
 
 
+# Prompt Management Endpoints
+@app.route("/prompts/default", methods=["GET"])
+def get_default_prompt():
+    """Get the default prompt content."""
+    try:
+        # Get the active prompt from database
+        active_prompt = prompt_model.get_active_prompt()
+
+        if active_prompt:
+            return (
+                jsonify(
+                    {
+                        "prompt": active_prompt.content,
+                        "name": active_prompt.name,
+                    }
+                ),
+                200,
+            )
+        else:
+            # Return the fallback prompt if no active prompt exists
+            fallback_prompt = prompt_model.get_default_prompt()
+            return (
+                jsonify(
+                    {
+                        "prompt": fallback_prompt,
+                        "name": "EMPRAD 2025 Default Assistant (Fallback)",
+                    }
+                ),
+                200,
+            )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route("/prompts/default", methods=["PUT"])
+def update_default_prompt():
+    """Update the default prompt content."""
+    data = request.get_json()
+    if not data or "prompt" not in data:
+        return jsonify({"error": "Missing required field: prompt"}), 400
+
+    try:
+        # Get the currently active prompt
+        active_prompt = prompt_model.get_active_prompt()
+
+        if active_prompt:
+            # Update the existing active prompt
+            active_prompt.content = data["prompt"]
+            active_prompt.name = data.get("name", active_prompt.name)
+            active_prompt.description = data.get(
+                "description", active_prompt.description
+            )
+            active_prompt.version = data.get("version", active_prompt.version)
+
+            # Get the prompt ID from the database
+            # We need to find the prompt by name since we don't have the ID
+            db_prompt = prompt_model.collection.find_one(
+                {"name": active_prompt.name, "is_active": True}
+            )
+            if db_prompt:
+                prompt_id = str(db_prompt["_id"])
+                # Update in database
+                if prompt_model.update(prompt_id, active_prompt):
+                    return (
+                        jsonify(
+                            {
+                                "message": "Default prompt updated successfully",
+                                "id": prompt_id,
+                                "name": active_prompt.name,
+                                "version": active_prompt.version,
+                                "prompt": active_prompt.content,
+                            }
+                        ),
+                        200,
+                    )
+                else:
+                    return jsonify({"error": "Failed to update prompt"}), 500
+            else:
+                return jsonify({"error": "Active prompt not found in database"}), 404
+        else:
+            # Create a new active prompt if none exists
+            new_prompt = Prompt(
+                name=data.get("name", "EMPRAD 2025 Default Assistant"),
+                content=data["prompt"],
+                description=data.get(
+                    "description", "Default prompt for the EMPRAD 2025 AI Assistant"
+                ),
+                is_active=True,
+                version=data.get("version", "1.0"),
+            )
+
+            prompt_id = prompt_model.create(new_prompt)
+            return (
+                jsonify(
+                    {
+                        "message": "Default prompt created successfully",
+                        "id": prompt_id,
+                        "name": new_prompt.name,
+                        "version": new_prompt.version,
+                        "prompt": new_prompt.content,
+                    }
+                ),
+                201,
+            )
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
 if __name__ == "__main__":
     # This is for local development only.
     # Gunicorn will run the app in production.

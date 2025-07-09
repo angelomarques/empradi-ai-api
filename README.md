@@ -72,6 +72,14 @@ python app.py
 
    # Activate a specific prompt
    curl -X POST http://localhost:5000/prompts/{prompt_id}/activate
+
+   # Get the default prompt (active or fallback)
+   curl -X GET http://localhost:5000/prompts/default
+
+   # Update the default prompt
+   curl -X PUT -H "Content-Type: application/json" \
+        -d '{"prompt":"Updated prompt content..."}' \
+        http://localhost:5000/prompts/default
    ```
 
 ## Features
@@ -125,15 +133,16 @@ python init_prompt.py
 
 ### API Endpoints
 
-| Method | Endpoint                 | Description                     |
-| ------ | ------------------------ | ------------------------------- |
-| POST   | `/prompts`               | Create a new prompt             |
-| GET    | `/prompts`               | Get all prompts                 |
-| GET    | `/prompts/{id}`          | Get a specific prompt           |
-| PUT    | `/prompts/{id}`          | Update a prompt                 |
-| DELETE | `/prompts/{id}`          | Delete a prompt                 |
-| POST   | `/prompts/{id}/activate` | Activate a prompt               |
-| GET    | `/prompts/active`        | Get the currently active prompt |
+| Method | Endpoint                 | Description                                 |
+| ------ | ------------------------ | ------------------------------------------- |
+| POST   | `/prompts`               | Create a new prompt                         |
+| GET    | `/prompts`               | Get all prompts                             |
+| GET    | `/prompts/{id}`          | Get a specific prompt                       |
+| PUT    | `/prompts/{id}`          | Update a prompt                             |
+| DELETE | `/prompts/{id}`          | Delete a prompt                             |
+| POST   | `/prompts/{id}/activate` | Activate a prompt                           |
+| GET    | `/prompts/active`        | Get the currently active prompt             |
+| GET    | `/prompts/default`       | Get the default prompt (active or fallback) |
 
 ### Prompt Model Fields
 
